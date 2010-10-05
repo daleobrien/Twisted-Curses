@@ -108,7 +108,7 @@ class App(CursesStdIO):
 
         self.__last_size = (tigetnum('lines'), tigetnum('cols'))
 
-        self.__focus__items = ['menu']
+        self.__focus__items = []
         self.__in_focus = 0
 
         start_color()
@@ -141,8 +141,12 @@ class App(CursesStdIO):
     def add_widget(self, name, widget ):
         # TODO: change to meta programming, since we will have more the list boxes
         self._widgets[name] = widget
+
         if name not in self.__focus__items:
+            if len(self.__focus__items)==0:
+                widget.set_focus(True)
             self.__focus__items.append(name)
+
         self.draw(True)
 
     def widget(self, name ):
@@ -162,7 +166,7 @@ class App(CursesStdIO):
             hot_key = text[1][0]
             self.__screen__.addstr(1, position, text[0],     A_NORMAL)
             position += len(text[0])
-            self.__screen__.addstr(1, position, hot_key,     A_UNDERLINE)
+            self.__screen__.addstr(1, position, hot_key,     A_UNDERLINE | A_BOLD)
             position += 1 
             self.__screen__.addstr(1, position, text[1][1:], A_NORMAL)
             position += len(text[1][1:]) + 2
@@ -182,7 +186,6 @@ class App(CursesStdIO):
     def draw(self, force=False):
         '''draw everything, and all widgets'''
 
-        curses.setupterm()
         _size = (tigetnum('lines'), tigetnum('cols'))
 
         if force or self.__last_size != _size:
@@ -191,10 +194,13 @@ class App(CursesStdIO):
 
             self.__screen__.resize( *_size )
             self.__screen__.clear()
+
             self.__draw_window()
             self.__draw_menu()
+
             self.__screen__.refresh()
 
+        # draw children last 
         self.__drawwidgets(force)
 
     def resize_hack(self):
@@ -235,8 +241,8 @@ class App(CursesStdIO):
             self.__in_focus %= (len(self.__focus__items))
             focus = self.__focus__items[self.__in_focus]
 
-            for list_box_name,list_box in self._widgets.items():
-                list_box.set_focus(focus==list_box_name)
+            for widget_name,widget in self._widgets.items():
+                widget.set_focus(focus==widget_name)
 
             self.draw(True)
 
@@ -259,9 +265,6 @@ class App(CursesStdIO):
 
             # generic, say arrow keys to select items
             elif focus in self._widgets:
-                self._widgets[focus].command(c)
-
-            else:
-                # TODO, pressing unued keys when it first starts up seems to blank the screen
-                self.draw(True)
+                if self._widgets[focus].command(c):
+                    self.draw(True)
 

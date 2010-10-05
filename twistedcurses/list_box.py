@@ -98,7 +98,8 @@ class ListBox():
             if self.__changed and self.callback is not None:
                 self.callback( {'active':self.__rows__[self.active]} )
 
-        self.draw()
+        #self.draw()
+        return self.__changed
 
 
     def draw(self,force=False):
