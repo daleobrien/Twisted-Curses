@@ -76,7 +76,7 @@ class Table():
             self.__has_focus = state
 
     def set_cells(self,cells):
-        for r,c,value in cells:
+        for c,r,value in cells:
             self.__cells__[r][c] = value 
         self.__changed = True
 
