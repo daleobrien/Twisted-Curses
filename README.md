@@ -1,4 +1,4 @@
-## ebook-maker
+## twistedcurses 
 
 Simple Text based GUI framework which uses Twisted and Curses.
 
