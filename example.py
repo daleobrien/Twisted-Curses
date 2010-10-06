@@ -17,6 +17,7 @@
 
 from twistedcurses.app import App
 from twistedcurses.list_box import ListBox
+from twistedcurses.table import Table
 
 class myApp(App):
     '''a simple app'''
@@ -32,8 +33,8 @@ class myApp(App):
         '''test callback, 
             here, we just add the callback to other listbox
         '''
-        self.widget('mid').add_rows( (arg['active'],) )
-        self.widget('mid').draw()
+        #self.widget('table').set_cells( (1,2,arg['active'],) )
+        #self.widget('table').draw()
 
 if __name__ == "__main__":
     '''   '''
@@ -50,8 +51,12 @@ if __name__ == "__main__":
     app.add_widget( 'side',list_box ) 
 
     # add another listbox
-    list_box = ListBox( (30,10), (10,10),None)
-    app.add_widget( 'mid',list_box)
+    table = Table( (30,3), (61,11),None, (5,5))
+    table.set_cells( ((0,0,"0,0"),
+                      (1,0,"1,0"),
+                      (1,1,"1,1"),
+                      (0,2,"0,2")))
+    app.add_widget( 'table',table)
 
     # twisted, ... Run Lola Run
     reactor.run()
