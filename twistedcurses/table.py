@@ -16,7 +16,7 @@
 
 from curses import (beep, panel,
                     KEY_DOWN, KEY_UP, KEY_END, KEY_LEFT, KEY_RIGHT, KEY_HOME, KEY_ENTER,
-                    A_UNDERLINE,
+                    A_UNDERLINE,A_STANDOUT,
                     tigetnum, newwin, ascii, color_pair)
 
 import curses
@@ -27,7 +27,6 @@ class Table():
         self.w,self.h = size
         self.x,self.y = position
         self.y += 2
-
 
         # number of rows and columns (in that order)
         self.dim = dim
@@ -94,7 +93,7 @@ class Table():
         elif key==KEY_DOWN and self.selected[0]+1 < self.dim[0]:
             self.selected[0] += 1
             self.__changed    = True
-        
+
         elif key==KEY_LEFT and self.selected[1]:
             self.selected[1] -= 1
             self.__changed    = True
@@ -105,16 +104,16 @@ class Table():
 
         elif key in (10,): 
 
+            curses.beep()
             if self.active != self.selected:
-                self.active = self.selected
+                self.active = self.selected[:]
                 self.__changed = True
 
-            if self.__changed and self.callback is not None:
-                self.callback( {'active':self.__rows__[self.active]} )
+                if self.callback is not None:
+                    r,c = self.active
+                    self.callback( {'active':self.__cells__[r][c] } )
 
-        #self.draw()
         return self.__changed
-
 
     def draw(self,force=False):
 
@@ -125,6 +124,7 @@ class Table():
 
             self.__changed = False
 
+            # outline of table
             attr = color_pair(1) if self.__has_focus else color_pair(0)
 
             win.attrset(attr)
@@ -152,7 +152,7 @@ class Table():
                     win.hline(y,x,curses.ACS_PLUS,1)
 
 
-            # sometimes there are more items than will fit in the in the visable list,
+            # sometimes there are more items than will fit in the in the table,
             # so move a display window along as needed
 
             w = self.__column_width + 1
@@ -179,7 +179,12 @@ class Table():
                         pos = [row_no,col_no]
 
                         attr = color_pair(1) if self.active == pos   else color_pair(0)
-                        text = ">%s"%text    if self.selected == pos else " %s"%text
+
+                        if self.selected == pos:
+                            attr |= A_STANDOUT
+                        if self.active == pos:
+                            attr |= A_UNDERLINE
+
 
                         win.addstr(h*row_no + 1 + row_offset,
                                    w*col_no + 1 + col_offset,

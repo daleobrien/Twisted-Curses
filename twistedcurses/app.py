@@ -28,6 +28,7 @@ from curses import (initscr,
                     tigetnum,
                     start_color,
                     init_pair,
+                    init_color,
                     noecho,
                     echo,
                     cbreak,
@@ -113,8 +114,8 @@ class App(CursesStdIO):
 
         start_color()
 
-        # focus border
-        init_pair(1, COLOR_BLUE, COLOR_BLACK)
+        # focus colour
+        init_pair(1, COLOR_YELLOW, COLOR_BLACK)
 
         noecho()
         cbreak()

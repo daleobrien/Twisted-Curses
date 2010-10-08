@@ -21,6 +21,7 @@ from curses import (panel,
                     KEY_HOME,
                     KEY_ENTER,
                     A_UNDERLINE,
+                    A_STANDOUT,
                     tigetnum,
                     newwin,
                     ascii,
@@ -98,7 +99,6 @@ class ListBox():
             if self.__changed and self.callback is not None:
                 self.callback( {'active':self.__rows__[self.active]} )
 
-        #self.draw()
         return self.__changed
 
 
@@ -126,14 +126,13 @@ class ListBox():
 
             for line_no,row in enumerate(self.__rows__):
                 attr = color_pair(1) if self.active == line_no else color_pair(0)
-                #if line_no == self.active:
-                #    attr |= A_UNDERLINE
+                if line_no == self.selected:
+                    attr |= A_STANDOUT 
+                if line_no == self.active:
+                    attr |=  A_UNDERLINE
 
                 # don't draw below the bottom
                 if line_no>=offset  and line_no-offset < self.__max_number_of_displayed_rows__:
-                    if self.selected == line_no:
-                        win.addstr(line_no+1-offset,1,">%s"%row, attr)
-                    else:
-                        win.addstr(line_no+1-offset,2,row, attr)
+                    win.addstr(line_no+1-offset,2,row, attr)
 
             win.refresh()
