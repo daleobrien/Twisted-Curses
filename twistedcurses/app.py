@@ -118,8 +118,6 @@ class App(CursesStdIO):
 
         noecho()
         cbreak()
-        # so we capture arrow keys, rather than excape squences
-        curs_set(False)
 
         self.title = title
         self.__menu__ = menu
