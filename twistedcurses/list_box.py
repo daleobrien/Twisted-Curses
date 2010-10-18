@@ -31,6 +31,8 @@ class ListBox():
 
     def __init__(self,position,size,callback):
 
+        self.__editable = True
+
         self.w,self.h = size
         self.x,self.y = position
         self.y += 2
@@ -65,6 +67,13 @@ class ListBox():
 
         self.__max_number_of_displayed_rows__ = h-2
         return h,w
+
+    def set_editable(self,editable):
+        if self.__editable != editable:
+            self.__editable = editable
+            if not editable and self.__has_focus:
+                self.__changed   = True
+                self.__has_focus = False
 
     def set_focus(self,state):
 
@@ -113,8 +122,8 @@ class ListBox():
 
             attr = color_pair(1) if self.__has_focus else color_pair(0)
 
-            win.attrset(attr)
             win.clear()
+            win.attrset(attr)
             win.box()
 
             # sometimes there are more items than will fit in the in the visiable list,
@@ -125,11 +134,15 @@ class ListBox():
                              max(self.selected -self.__max_number_of_displayed_rows__ + 2,0))
 
             for line_no,row in enumerate(self.__rows__):
-                attr = color_pair(1) if self.active == line_no else color_pair(0)
-                if line_no == self.selected:
-                    attr |= A_STANDOUT 
-                if line_no == self.active:
-                    attr |=  A_UNDERLINE
+
+                if self.__editable:
+                    attr = color_pair(1) if self.active == line_no else color_pair(0)
+                    if line_no == self.selected:
+                        attr |= A_STANDOUT 
+                    if line_no == self.active:
+                        attr |=  A_UNDERLINE
+                else:
+                    attr = color_pair(0)
 
                 # don't draw below the bottom
                 if line_no>=offset  and line_no-offset < self.__max_number_of_displayed_rows__:

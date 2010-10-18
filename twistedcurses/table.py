@@ -24,6 +24,8 @@ class Table():
 
     def __init__(self,position,size,callback,dim):
 
+        self.__editable = True
+
         self.w,self.h = size
         self.x,self.y = position
         self.y += 2
@@ -68,8 +70,15 @@ class Table():
         self.__max_number_of_displayed_cols__ = w/4-2
         return h,w
 
-    def set_focus(self,state):
+    def set_editable(self,editable):
 
+        if self.__editable != editable:
+            self.__editable = editable
+            if not editable and self.__has_focus:
+                self.__changed   = True
+                self.__has_focus = False
+
+    def set_focus(self,state):
         if state != self.__has_focus:
             self.__changed   = True
             self.__has_focus = state
@@ -127,8 +136,8 @@ class Table():
             # outline of table
             attr = color_pair(1) if self.__has_focus else color_pair(0)
 
-            win.attrset(attr)
             win.clear()
+            win.attrset(attr)
             win.box()
 
 
@@ -178,12 +187,17 @@ class Table():
                         text = ("%s"%cell).rjust(self.__column_width-1)
                         pos = [row_no,col_no]
 
-                        attr = color_pair(1) if self.active == pos   else color_pair(0)
+                        if self.__editable:
+                            attr = color_pair(1) if self.active == pos  else color_pair(0)
 
-                        if self.selected == pos:
-                            attr |= A_STANDOUT
-                        if self.active == pos:
-                            attr |= A_UNDERLINE
+                            if self.selected == pos:
+                                attr |= A_STANDOUT
+                            if self.active == pos:
+                                attr |= A_UNDERLINE
+                        else:
+                            attr = color_pair(0)
+
+
 
 
                         win.addstr(h*row_no + 1 + row_offset,

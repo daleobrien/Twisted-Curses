@@ -48,7 +48,7 @@ if __name__ == "__main__":
     list_box.add_rows( ('item 1', 'item 2', 'item 3',
                         'item 4', 'item 5', 'item 6',
                         'item 7', 'item 8', 'item 9') )
-    app.add_widget( 'side',list_box ) 
+    app.add_widget( 'side', list_box )
 
     # add another listbox
     table = Table( (30,3), (61,11),None, (5,5))
@@ -57,6 +57,8 @@ if __name__ == "__main__":
                       (1,1,"1,1"),
                       (0,2,"0,2")))
     app.add_widget( 'table',table)
+
+    app.set_editable('side',False)
 
     # twisted, ... Run Lola Run
     reactor.run()

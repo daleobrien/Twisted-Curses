@@ -148,6 +148,28 @@ class App(CursesStdIO):
 
         self.draw(True)
 
+    def set_editable(self,name, editable):
+        '''allow widgets to be selectable (and thus editable) or now'''
+
+        if name in self._widgets:
+            self._widgets[name].set_editable(editable)
+
+            if name in self.__focus__items and not editable:
+
+                # might have to change which widget has focus, if we are 
+                # making the current selected widget write only
+                if name == self.__focus__items[self.__in_focus]:
+                    self.__in_focus = 0
+                    self._widgets[self.__focus__items[self.__in_focus]].set_focus(True)
+
+                self.__focus__items.remove(name)
+                self._widgets[name].set_focus(False)
+
+            if name not in self.__focus__items and editable:
+                self.__focus__items.append(name)
+
+            self.draw(True)
+
     def widget(self, name ):
         if self._widgets.has_key(name):
             return self._widgets[name]
