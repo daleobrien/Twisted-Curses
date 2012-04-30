@@ -14,14 +14,15 @@
 
 '''
 
-from twisted.internet.task import LoopingCall
+#from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 
 import curses 
 
 from curses.ascii import TAB
 
-from curses import (initscr,
+from curses import (
+                    initscr,
                     setupterm,
                     newwin,
                     endwin,
@@ -32,7 +33,7 @@ from curses import (initscr,
                     noecho,
                     echo,
                     cbreak,
-                    curs_set,
+                    #curs_set,
 
                     KEY_END,
                     KEY_RESIZE,

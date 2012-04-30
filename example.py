@@ -45,20 +45,25 @@ if __name__ == "__main__":
 
     # create a listbox (it's all we have so far)
     list_box = ListBox( (0,0), (20,-1), app.list_box_active_item_changed)
+
     list_box.add_rows( ('item 1', 'item 2', 'item 3',
                         'item 4', 'item 5', 'item 6',
                         'item 7', 'item 8', 'item 9') )
     app.add_widget( 'side', list_box )
 
     # add another listbox
-    table = Table( (30,3), (61,11),None, (5,5))
+    table = Table( (30,3),
+                   (61,11),
+                   None,
+                   (5,5))
     table.set_cells( ((0,0,"0,0"),
                       (1,0,"1,0"),
                       (1,1,"1,1"),
                       (0,2,"0,2")))
+
     app.add_widget( 'table',table)
 
-    app.set_editable('table',False)
+    app.set_editable('table',True)
 
     # twisted, ... Run Lola Run
     reactor.run()
