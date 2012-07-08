@@ -113,8 +113,14 @@ class ListBox():
 
     def draw(self, force=False):
 
+        f = open("log.log", "wa")
+        print >>f, 'Listbox Draw callex'
+        print >>f, 'size => ', self.__size__()
+        f.close()
+
         win = self.__panel__.window()
-        win.resize(*self.__size__())
+
+        new_size = self.__size__()
 
         if self.__changed or force:
 
@@ -122,6 +128,7 @@ class ListBox():
 
             attr = color_pair(1) if self.__has_focus else color_pair(0)
 
+            win.resize(*new_size)
             win.clear()
             win.attrset(attr)
             win.box()

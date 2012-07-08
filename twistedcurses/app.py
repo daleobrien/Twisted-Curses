@@ -105,6 +105,7 @@ class App(CursesStdIO):
         signal(SIGWINCH, self.onResize)
 
         #curses.setupterm()
+        self.__first_time_through = True
 
         self.__stdscr = curses.initscr()
         self.__stdscr.keypad(True)
@@ -122,8 +123,7 @@ class App(CursesStdIO):
         self.__in_focus = 0
 
         curses.start_color()
-
-        # focus colour
+        # focused colour
         curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
         curses.noecho()
@@ -222,6 +222,10 @@ class App(CursesStdIO):
 
         if force or self.__last_size != _size:
 
+            f = open("log.log", "wa")
+            print >>f, 'App Draw calley'
+            print >>f, 'size => ', _size
+
             self.__last_size = _size
 
             self._menu.resize(*_size)
@@ -259,15 +263,17 @@ class App(CursesStdIO):
     def doRead(self):
         '''Called when a character is waiting'''
 
-        #f = open("log.log", "wa")
-        #print >>f, 'doRead called'
+        # this clears the screen ?
         key = self.__stdscr.getch()
-        #print >>f, 'key', key
-        #f.close()
 
         self.process_character(key)
 
     def process_character(self, c):
+
+        f = open("log.log", "wa")
+        print >>f, 'App Process key A'
+        f.close()
+
         #TAB, change focus
         if c in (TAB,):
             self.__in_focus += 1
@@ -285,7 +291,9 @@ class App(CursesStdIO):
             # TODO there a whole lot more special key events, need to check
             # those too, e.g.  SUSPEND
             if c in (curses.KEY_RESIZE,):
-                #print 'resize event'
+                f = open("log.log", "wa")
+                print >>f, 'App KEY_RESIZE called'
+                f.close()
                 self.draw(True)
 
             # menu handlers
@@ -302,6 +310,10 @@ class App(CursesStdIO):
             # generic, say arrow keys to select items
             elif focus in self._widgets:
                 if self._widgets[focus].command(c):
-                    self.draw(True)
+                    if self.__first_time_through:
+                        self.draw(True)
+                        self.__first_time_through = False
+                    else:
+                        self._widgets[focus].draw(False)
 
 #

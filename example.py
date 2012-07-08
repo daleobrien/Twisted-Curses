@@ -34,8 +34,8 @@ class myApp(App):
         '''test callback,
             here, we just add the callback to other listbox
         '''
-        #self.widget('table').set_cells( (1,2,arg['active'],) )
-        #self.widget('table').draw()
+        self.widget('table').set_cells([(1, 2, arg['active'])])
+        self.widget('table').draw()
 
 if __name__ == "__main__":
     '''   '''
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     app.add_widget('table', table)
 
-    app.set_editable('table', True)
+    app.set_editable('table', False)
 
     # twisted, ... Run Lola Run
     reactor.run()
