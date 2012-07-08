@@ -18,17 +18,24 @@
 from twistedcurses.app import App
 from twistedcurses.list_box import ListBox
 from twistedcurses.table import Table
+from twisted.python import log
 
 
 class myApp(App):
     '''a simple app'''
 
     def __init__(self, reactor):
-        self.menu = [('&File', None),
-                     ('Te&st', None),
-                     ('&Quit', self.quit)]
+        self.menu = [('&start', self.start),
+                     ('sto&p', self.stop),
+                     ('&quit', self.quit)]
 
         App.__init__(self, reactor, 'Simple App', self.menu)
+
+    def start(self, key):
+        log.msg("menu: start", key)
+
+    def stop(self, key):
+        log.msg("menu: stop", key)
 
     def list_box_active_item_changed(self, arg):
         '''test callback,

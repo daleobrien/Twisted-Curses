@@ -132,6 +132,7 @@ class App(CursesStdIO):
 
     def __draw_menu(self):
         position = 2
+        self.__key_handler__['menu'] = {}
         for menu, callback in self.__menu__:
             text = menu.split('&')
             hot_key = text[1][0]
@@ -146,7 +147,7 @@ class App(CursesStdIO):
             self._menu.addstr(1, position, text[1][1:], curses.A_NORMAL)
             position += len(text[1][1:]) + 2
 
-            self.__key_handler__['menu'] = {ord(hot_key): callback}
+            self.__key_handler__['menu'][ord(hot_key)] = callback
 
         # draw app title
         middle = (curses.tigetnum('cols') - position) / 2
@@ -213,7 +214,7 @@ class App(CursesStdIO):
 
     def process_character(self, c):
 
-        log.msg("KEY PRESS")
+        log.msg("KEY PRESS", c)
 
         #TAB, change focus
         if c in (ascii.TAB,):
