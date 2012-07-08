@@ -15,50 +15,50 @@
 '''
 
 #from twisted.internet.task import LoopingCall
-from twisted.internet import reactor
 
-import curses 
+import curses
 
 from curses.ascii import TAB
 
-from curses import (
-                    initscr,
-                    setupterm,
-                    newwin,
-                    endwin,
-                    tigetnum,
-                    start_color,
-                    init_pair,
-                    init_color,
-                    noecho,
-                    echo,
-                    cbreak,
-                    #curs_set,
+from signal import signal, SIGWINCH
 
-                    KEY_END,
-                    KEY_RESIZE,
+#from curses import (initscr,
+                    ##setupterm,
+                    #newwin,
+                    #endwin,
+                    #tigetnum,
+                    #start_color,
+                    #init_pair,
+                    ##init_color,
+                    #noecho,
+                    #echo,
+                    #cbreak,
+                    ##curs_set,
 
-                    COLOR_BLACK,
-                    COLOR_BLUE,
-                    COLOR_CYAN,
-                    COLOR_GREEN,
-                    COLOR_MAGENTA,
-                    COLOR_RED,
-                    COLOR_WHITE,
-                    COLOR_YELLOW,
+                    ##KEY_END,
+                    #KEY_RESIZE,
 
-                    A_NORMAL,        # Normal display (no highlight)
-                    A_STANDOUT,      # Best highlighting mode of the terminal.
-                    A_UNDERLINE,     # Underlining
-                    A_REVERSE,       # Reverse video
-                    A_BLINK,         # Blinking
-                    A_DIM,           # Half bright
-                    A_BOLD,          # Extra bright or bold
-                    A_PROTECT,       # Protected mode
-                    A_INVIS,         # Invisible or blank mode
-                    A_ALTCHARSET,    # Alternate character set
-                    A_CHARTEXT,      # Bit-mask to extract a character
-                    )
+                    #COLOR_BLACK,
+                    ##COLOR_BLUE,
+                    ##COLOR_CYAN,
+                    ##COLOR_GREEN,
+                    ##COLOR_MAGENTA,
+                    ##COLOR_RED,
+                    ##COLOR_WHITE,
+                    #COLOR_YELLOW,
+
+                    #A_NORMAL,        # Normal display (no highlight)
+                    ##A_STANDOUT,    # Best highlighting mode of the terminal.
+                    #A_UNDERLINE,     # Underlining
+                    ##A_REVERSE,       # Reverse video
+                    ##A_BLINK,         # Blinking
+                    ##A_DIM,           # Half bright
+                    #A_BOLD,          # Extra bright or bold
+                    ##A_PROTECT,       # Protected mode
+                    ##A_INVIS,         # Invisible or blank mode
+                    ##A_ALTCHARSET,    # Alternate character set
+                    ##A_CHARTEXT,      # Bit-mask to extract a character
+                    #)
 
 
 ''' some attrs
@@ -74,10 +74,10 @@ from curses import (
     A_ALTCHARSET    Alternate character set
     A_CHARTEXT      Bit-mask to extract a character
 
-    COLOR_PAIR(n)   Color-pair number n 
-
+    COLOR_PAIR(n)   Color-pair number n
 
 '''
+
 
 class CursesStdIO:
     """fake fd to be registered as a reader with the twisted reactor.
@@ -93,33 +93,41 @@ class CursesStdIO:
     def doRead(self):
         """called when input is ready"""
 
+
 class App(CursesStdIO):
 
-    def __init__(self, title='My App', menu={}):
+    def __init__(self, reactor, title='My App', menu={}):
         '''menu -> { 'file':callback, 'view':callback}
         '''
 
-        curses.setupterm()
-        self.__stdscr = initscr()
-        self.__stdscr.nodelay(1)
+        self.__reactor = reactor
+
+        signal(SIGWINCH, self.onResize)
+
+        #curses.setupterm()
+
+        self.__stdscr = curses.initscr()
         self.__stdscr.keypad(True)
+        self.__stdscr.nodelay(True)
 
-        self.__screen__ = newwin(tigetnum('lines'),
-                                 tigetnum('cols'),
-                                 0,0)
+        self._menu = curses.newwin(curses.tigetnum('lines'),
+                                   curses.tigetnum('cols'),
+                                   0,
+                                   0)
 
-        self.__last_size = (tigetnum('lines'), tigetnum('cols'))
+        self.__last_size = (curses.tigetnum('lines'),
+                            curses.tigetnum('cols'))
 
         self.__focus__items = []
         self.__in_focus = 0
 
-        start_color()
+        curses.start_color()
 
         # focus colour
-        init_pair(1, COLOR_YELLOW, COLOR_BLACK)
+        curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-        noecho()
-        cbreak()
+        curses.noecho()
+        curses.cbreak()
 
         self.title = title
         self.__menu__ = menu
@@ -132,24 +140,24 @@ class App(CursesStdIO):
         self.draw(True)
 
         # so we can read stdio
-        reactor.addReader(self)
+        self.__reactor.addReader(self)
 
-        # hack, to allow it to resize, it's not the right way though
-        #self.__check_screen_size_hack = LoopingCall(self.resize_hack)
-        #self.__check_screen_size_hack.start(0.5,True)
+    def onResize(self, sig, stack):
+        self.process_character(curses.KEY_RESIZE)
 
-    def add_widget(self, name, widget ):
-        # TODO: change to meta programming, since we will have more the list boxes
+    def add_widget(self, name, widget):
+        # TODO: change to meta programming, since we will have more the list
+        # boxes
         self._widgets[name] = widget
 
         if name not in self.__focus__items:
-            if len(self.__focus__items)==0:
+            if len(self.__focus__items) == 0:
                 widget.set_focus(True)
             self.__focus__items.append(name)
 
         self.draw(True)
 
-    def set_editable(self,name, editable):
+    def set_editable(self, name, editable):
         '''allow widgets to be selectable (and thus editable) or now'''
 
         if name in self._widgets:
@@ -157,11 +165,12 @@ class App(CursesStdIO):
 
             if name in self.__focus__items and not editable:
 
-                # might have to change which widget has focus, if we are 
+                # might have to change which widget has focus, if we are
                 # making the current selected widget write only
                 if name == self.__focus__items[self.__in_focus]:
                     self.__in_focus = 0
-                    self._widgets[self.__focus__items[self.__in_focus]].set_focus(True)
+                    self._widgets[self.__focus__items[self.__in_focus]]\
+                        .set_focus(True)
 
                 self.__focus__items.remove(name)
                 self._widgets[name].set_focus(False)
@@ -171,62 +180,64 @@ class App(CursesStdIO):
 
             self.draw(True)
 
-    def widget(self, name ):
-        if self._widgets.has_key(name):
+    def widget(self, name):
+        if name in self._widgets:
             return self._widgets[name]
         return None
 
-    def __draw_window(self):
-        '''only really holds the menu bar, could only repaint part of it ...'''
-        self.__screen__.box()
-        self.__screen__.hline(2,1,curses.ACS_HLINE,tigetnum('cols')-2)
-
     def __draw_menu(self):
         position = 2
-        for menu,callback in self.__menu__:
-            text    = menu.split('&')
+        for menu, callback in self.__menu__:
+            text = menu.split('&')
             hot_key = text[1][0]
-            self.__screen__.addstr(1, position, text[0],     A_NORMAL)
+            self._menu.addstr(1, position, text[0], curses.A_NORMAL)
             position += len(text[0])
-            self.__screen__.addstr(1, position, hot_key,     A_UNDERLINE | A_BOLD)
-            position += 1 
-            self.__screen__.addstr(1, position, text[1][1:], A_NORMAL)
+
+            self._menu.addstr(1,
+                              position,
+                              hot_key,
+                              curses.A_UNDERLINE | curses.A_BOLD)
+            position += 1
+            self._menu.addstr(1, position, text[1][1:], curses.A_NORMAL)
             position += len(text[1][1:]) + 2
 
-            self.__key_handler__['menu'] = { ord(hot_key): callback }
+            self.__key_handler__['menu'] = {ord(hot_key): callback}
 
         # draw app title
-        middle = (tigetnum('cols') - position )/2
-        self.__screen__.addstr(1, middle, '=== '+self.title+" ===", A_NORMAL) 
+        middle = (curses.tigetnum('cols') - position) / 2
 
-    def __drawwidgets(self,force):
+        self._menu.addstr(1, middle, '=== ' +\
+            self.title + " ===", curses.A_NORMAL)
+
+    def __drawwidgets(self, force):
         # TODO meta programming
         # should be a list of child widgets
-        for name,widget in self._widgets.items():
+        for name, widget in self._widgets.items():
             widget.draw(force)
 
     def draw(self, force=False):
         '''draw everything, and all widgets'''
 
-        _size = (tigetnum('lines'), tigetnum('cols'))
+        _size = (curses.tigetnum('lines'), curses.tigetnum('cols'))
 
         if force or self.__last_size != _size:
 
             self.__last_size = _size
 
-            self.__screen__.resize( *_size )
-            self.__screen__.clear()
+            self._menu.resize(*_size)
+            self._menu.clear()
+            self._menu.box()
+            self._menu.hline(2,
+                             1,
+                             curses.ACS_HLINE,
+                             curses.tigetnum('cols') - 2)
 
-            self.__draw_window()
             self.__draw_menu()
 
-            self.__screen__.refresh()
+            self._menu.refresh()
 
-        # draw children last 
+        # draw children last
         self.__drawwidgets(force)
-
-    def resize_hack(self):
-        self.draw(True)
 
     def logPrefix(self):
         pass
@@ -241,39 +252,41 @@ class App(CursesStdIO):
         curses.echo()
         curses.endwin()
 
-    def quit(self,key=None):
-        echo()
-        endwin()
-        reactor.stop()
+    def quit(self, key=None):
+        self.close()
+        self.__reactor.stop()
 
     def doRead(self):
-        '''called when a character is waiting'''
+        '''Called when a character is waiting'''
 
-        # doesn't seem to response to KEY_RESIZE,
-        # like it did when I didn't use twisted ?
-        # what has twsited got againt it ?
+        #f = open("log.log", "wa")
+        #print >>f, 'doRead called'
         key = self.__stdscr.getch()
+        #print >>f, 'key', key
+        #f.close()
 
         self.process_character(key)
 
-    def process_character(self,c):
+    def process_character(self, c):
         #TAB, change focus
         if c in (TAB,):
             self.__in_focus += 1
             self.__in_focus %= (len(self.__focus__items))
             focus = self.__focus__items[self.__in_focus]
 
-            for widget_name,widget in self._widgets.items():
-                widget.set_focus(focus==widget_name)
+            for widget_name, widget in self._widgets.items():
+                widget.set_focus(focus == widget_name)
 
             self.draw(True)
 
         else:
             focus = self.__focus__items[self.__in_focus]
 
-            # TODO there a whole lot more special key events, need to check those too, e.g.  SUSPEND
-            if c in (KEY_RESIZE,):
-                self.draw()
+            # TODO there a whole lot more special key events, need to check
+            # those too, e.g.  SUSPEND
+            if c in (curses.KEY_RESIZE,):
+                #print 'resize event'
+                self.draw(True)
 
             # menu handlers
             elif c in self.__key_handler__['menu']:
@@ -281,7 +294,8 @@ class App(CursesStdIO):
                     self.__key_handler__['menu'][c](c)
 
             # custom handlers
-            elif self.__key_handler__.has_key(focus) and c in self.__key_handler__[focus]:
+            elif (focus in self.__key_handler__ and
+                  c in self.__key_handler__[focus]):
                 if self.__key_handler__[focus][c]:
                     self.__key_handler__[focus][c](c)
 
@@ -290,3 +304,4 @@ class App(CursesStdIO):
                 if self._widgets[focus].command(c):
                     self.draw(True)
 
+#

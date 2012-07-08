@@ -17,38 +17,39 @@
 from curses import (panel,
                     KEY_DOWN,
                     KEY_UP,
-                    KEY_END,
-                    KEY_HOME,
+                    #KEY_END,
+                    #KEY_HOME,
                     KEY_ENTER,
                     A_UNDERLINE,
                     A_STANDOUT,
                     tigetnum,
                     newwin,
-                    ascii,
+                    #ascii,
                     color_pair)
+
 
 class ListBox():
 
-    def __init__(self,position,size,callback):
+    def __init__(self, position, size, callback):
 
         self.__editable = True
 
-        self.w,self.h = size
-        self.x,self.y = position
+        self.w, self.h = size
+        self.x, self.y = position
         self.y += 2
 
         self.__last_size = None
         self.__has_focus = False
-        h,w = self.__size__()
+        h, w = self.__size__()
 
-        self.__panel__ = panel.new_panel(newwin(h,w,self.y,self.x))
+        self.__panel__ = panel.new_panel(newwin(h, w, self.y, self.x))
 
-        self.__rows__    = []
-        self.__changed   = True
+        self.__rows__ = []
+        self.__changed = True
 
         # which row is selected
         self.selected = 0
-        self.active   = 0
+        self.active = 0
 
         self.callback = callback
         self.draw()
@@ -58,63 +59,62 @@ class ListBox():
 
         # use -1 , fill width,
         # -2, half of the width ??
-        w = tigetnum('cols')  - self.x if self.w < 0 else self.w
+        w = tigetnum('cols') - self.x if self.w < 0 else self.w
         h = tigetnum('lines') - self.y if self.h < 0 else self.h
 
-        if (w,h) != self.__last_size:
-            self.__changed   = True
-            self.__last_size = (w,h)
+        if (w, h) != self.__last_size:
+            self.__changed = True
+            self.__last_size = (w, h)
 
-        self.__max_number_of_displayed_rows__ = h-2
-        return h,w
+        self.__max_number_of_displayed_rows__ = h - 2
+        return h, w
 
-    def set_editable(self,editable):
+    def set_editable(self, editable):
         if self.__editable != editable:
             self.__editable = editable
             if not editable and self.__has_focus:
-                self.__changed   = True
+                self.__changed = True
                 self.__has_focus = False
 
-    def set_focus(self,state):
+    def set_focus(self, state):
 
         if state != self.__has_focus:
-            self.__changed   = True
+            self.__changed = True
             self.__has_focus = state
 
     def add_rows(self, rows):
-        self.__rows__ += rows 
+        self.__rows__ += rows
         self.__changed = True
 
-    def remove_row(self,index):
+    def remove_row(self, index):
         '''TODO'''
         self.__changed = True
 
     def command(self, key):
         '''process commands'''
 
-        if key==KEY_UP and self.selected:
+        if key == KEY_UP and self.selected:
             self.selected -= 1
             self.__changed = True
 
-        elif key==KEY_DOWN and self.selected+1 < len(self.__rows__):
+        elif key == KEY_DOWN and self.selected + 1 < len(self.__rows__):
             self.selected += 1
             self.__changed = True
 
-        elif key in (KEY_ENTER,10): # ENTER doesn't work, but 10 does
+        elif key in (KEY_ENTER, 10):  # ENTER doesn't work, but 10 does
             if self.active != self.selected:
                 self.active = self.selected
                 self.__changed = True
 
             if self.__changed and self.callback is not None:
-                self.callback( {'active':self.__rows__[self.active]} )
+                self.callback({'active': self.__rows__[self.active]})
 
         return self.__changed
 
-
-    def draw(self,force=False):
+    def draw(self, force=False):
 
         win = self.__panel__.window()
-        win.resize( *self.__size__() )
+        win.resize(*self.__size__())
 
         if self.__changed or force:
 
@@ -126,26 +126,32 @@ class ListBox():
             win.attrset(attr)
             win.box()
 
-            # sometimes there are more items than will fit in the in the visiable list,
-            # so move a display window along as needed
+            # sometimes there are more items than will fit in the in the
+            # visiable list, so move a display window along as needed
             offset = 0
             if len(self.__rows__) > self.__max_number_of_displayed_rows__:
-                offset = min( len(self.__rows__) - self.__max_number_of_displayed_rows__, 
-                             max(self.selected -self.__max_number_of_displayed_rows__ + 2,0))
+                a = len(self.__rows__) - self.__max_number_of_displayed_rows__
+                b = max(self.selected -
+                        self.__max_number_of_displayed_rows__ + 2, 0)
+                offset = min(a, b)
 
-            for line_no,row in enumerate(self.__rows__):
+            for line_no, row in enumerate(self.__rows__):
 
                 if self.__editable:
-                    attr = color_pair(1) if self.active == line_no else color_pair(0)
+                    attr = color_pair(1) if self.active == line_no\
+                        else color_pair(0)
+
                     if line_no == self.selected:
-                        attr |= A_STANDOUT 
+                        attr |= A_STANDOUT
+
                     if line_no == self.active:
-                        attr |=  A_UNDERLINE
+                        attr |= A_UNDERLINE
                 else:
                     attr = color_pair(0)
 
                 # don't draw below the bottom
-                if line_no>=offset  and line_no-offset < self.__max_number_of_displayed_rows__:
-                    win.addstr(line_no+1-offset,2,row, attr)
+                if(line_no >= offset  and
+                   line_no - offset < self.__max_number_of_displayed_rows__):
+                    win.addstr(line_no + 1 - offset, 2, row, attr)
 
             win.refresh()
