@@ -14,69 +14,12 @@
 
 '''
 
-#from twisted.internet.task import LoopingCall
-
 import curses
-
-from curses.ascii import TAB
+from curses import ascii
 
 from signal import signal, SIGWINCH
 
-#from curses import (initscr,
-                    ##setupterm,
-                    #newwin,
-                    #endwin,
-                    #tigetnum,
-                    #start_color,
-                    #init_pair,
-                    ##init_color,
-                    #noecho,
-                    #echo,
-                    #cbreak,
-                    ##curs_set,
-
-                    ##KEY_END,
-                    #KEY_RESIZE,
-
-                    #COLOR_BLACK,
-                    ##COLOR_BLUE,
-                    ##COLOR_CYAN,
-                    ##COLOR_GREEN,
-                    ##COLOR_MAGENTA,
-                    ##COLOR_RED,
-                    ##COLOR_WHITE,
-                    #COLOR_YELLOW,
-
-                    #A_NORMAL,        # Normal display (no highlight)
-                    ##A_STANDOUT,    # Best highlighting mode of the terminal.
-                    #A_UNDERLINE,     # Underlining
-                    ##A_REVERSE,       # Reverse video
-                    ##A_BLINK,         # Blinking
-                    ##A_DIM,           # Half bright
-                    #A_BOLD,          # Extra bright or bold
-                    ##A_PROTECT,       # Protected mode
-                    ##A_INVIS,         # Invisible or blank mode
-                    ##A_ALTCHARSET,    # Alternate character set
-                    ##A_CHARTEXT,      # Bit-mask to extract a character
-                    #)
-
-
-''' some attrs
-    A_NORMAL        Normal display (no highlight)
-    A_STANDOUT      Best highlighting mode of the terminal.
-    A_UNDERLINE     Underlining
-    A_REVERSE       Reverse video
-    A_BLINK         Blinking
-    A_DIM           Half bright
-    A_BOLD          Extra bright or bold
-    A_PROTECT       Protected mode
-    A_INVIS         Invisible or blank mode
-    A_ALTCHARSET    Alternate character set
-    A_CHARTEXT      Bit-mask to extract a character
-
-    COLOR_PAIR(n)   Color-pair number n
-
-'''
+from twisted.python import log
 
 
 class CursesStdIO:
@@ -100,6 +43,7 @@ class App(CursesStdIO):
         '''menu -> { 'file':callback, 'view':callback}
         '''
 
+        log.startLogging(open('log.log', 'w'))
         self.__reactor = reactor
 
         signal(SIGWINCH, self.onResize)
@@ -128,6 +72,7 @@ class App(CursesStdIO):
 
         curses.noecho()
         curses.cbreak()
+        curses.curs_set(False)
 
         self.title = title
         self.__menu__ = menu
@@ -218,30 +163,28 @@ class App(CursesStdIO):
     def draw(self, force=False):
         '''draw everything, and all widgets'''
 
-        _size = (curses.tigetnum('lines'), curses.tigetnum('cols'))
+        _size = (curses.tigetnum('lines'),
+                 curses.tigetnum('cols'))
 
         if force or self.__last_size != _size:
 
-            f = open("log.log", "wa")
-            print >>f, 'App Draw calley'
-            print >>f, 'size => ', _size
-
-            self.__last_size = _size
+            log.msg("App Draw called, new_size", _size)
 
             self._menu.resize(*_size)
             self._menu.clear()
-            self._menu.box()
             self._menu.hline(2,
                              1,
                              curses.ACS_HLINE,
                              curses.tigetnum('cols') - 2)
-
+            self._menu.box()
             self.__draw_menu()
 
             self._menu.refresh()
 
         # draw children last
         self.__drawwidgets(force)
+
+        self.__last_size = _size
 
     def logPrefix(self):
         pass
@@ -270,12 +213,11 @@ class App(CursesStdIO):
 
     def process_character(self, c):
 
-        f = open("log.log", "wa")
-        print >>f, 'App Process key A'
-        f.close()
+        log.msg("KEY PRESS")
 
         #TAB, change focus
-        if c in (TAB,):
+        if c in (ascii.TAB,):
+            log.msg("KEY TAB")
             self.__in_focus += 1
             self.__in_focus %= (len(self.__focus__items))
             focus = self.__focus__items[self.__in_focus]
@@ -291,9 +233,7 @@ class App(CursesStdIO):
             # TODO there a whole lot more special key events, need to check
             # those too, e.g.  SUSPEND
             if c in (curses.KEY_RESIZE,):
-                f = open("log.log", "wa")
-                print >>f, 'App KEY_RESIZE called'
-                f.close()
+                log.msg("KEY_RESIZE")
                 self.draw(True)
 
             # menu handlers

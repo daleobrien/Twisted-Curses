@@ -14,6 +14,7 @@
 
 '''
 
+from twisted.python import log
 #from curses import (panel,
                     #KEY_DOWN,
                     #KEY_UP,
@@ -142,13 +143,11 @@ class Table():
 
     def draw(self, force=False):
 
-        f = open("log.log", "wa")
-        print >>f, 'Table Draw callez'
-        f.close()
+        new_size = self.__size__()
+
+        log.msg("Table Draw called, new_size", new_size)
 
         win = self.__panel__.window()
-
-        new_size = self.__size__()
 
         if self.__changed or force:
 

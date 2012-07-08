@@ -41,7 +41,6 @@ if __name__ == "__main__":
     '''   '''
 
     from twisted.internet import reactor
-    #from twisted.internet import selectreactor as reactor
 
     app = myApp(reactor)
 

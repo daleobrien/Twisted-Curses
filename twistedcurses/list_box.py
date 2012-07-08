@@ -14,18 +14,10 @@
 
 '''
 
-from curses import (panel,
-                    KEY_DOWN,
-                    KEY_UP,
-                    #KEY_END,
-                    #KEY_HOME,
-                    KEY_ENTER,
-                    A_UNDERLINE,
-                    A_STANDOUT,
-                    tigetnum,
-                    newwin,
-                    #ascii,
-                    color_pair)
+from twisted.python import log
+
+import curses
+from curses import panel
 
 
 class ListBox():
@@ -42,7 +34,10 @@ class ListBox():
         self.__has_focus = False
         h, w = self.__size__()
 
-        self.__panel__ = panel.new_panel(newwin(h, w, self.y, self.x))
+        self.__panel__ = panel.new_panel(curses.newwin(h,
+                                                w,
+                                                self.y,
+                                                self.x))
 
         self.__rows__ = []
         self.__changed = True
@@ -59,8 +54,8 @@ class ListBox():
 
         # use -1 , fill width,
         # -2, half of the width ??
-        w = tigetnum('cols') - self.x if self.w < 0 else self.w
-        h = tigetnum('lines') - self.y if self.h < 0 else self.h
+        w = curses.tigetnum('cols') - self.x if self.w < 0 else self.w
+        h = curses.tigetnum('lines') - self.y if self.h < 0 else self.h
 
         if (w, h) != self.__last_size:
             self.__changed = True
@@ -93,15 +88,15 @@ class ListBox():
     def command(self, key):
         '''process commands'''
 
-        if key == KEY_UP and self.selected:
+        if key == curses.KEY_UP and self.selected:
             self.selected -= 1
             self.__changed = True
 
-        elif key == KEY_DOWN and self.selected + 1 < len(self.__rows__):
+        elif key == curses.KEY_DOWN and self.selected + 1 < len(self.__rows__):
             self.selected += 1
             self.__changed = True
 
-        elif key in (KEY_ENTER, 10):  # ENTER doesn't work, but 10 does
+        elif key in (curses.KEY_ENTER, 10):  # ENTER doesn't work, but 10 does
             if self.active != self.selected:
                 self.active = self.selected
                 self.__changed = True
@@ -113,20 +108,18 @@ class ListBox():
 
     def draw(self, force=False):
 
-        f = open("log.log", "wa")
-        print >>f, 'Listbox Draw callex'
-        print >>f, 'size => ', self.__size__()
-        f.close()
+        new_size = self.__size__()
+
+        log.msg("ListBox Draw called, new_size", new_size)
 
         win = self.__panel__.window()
-
-        new_size = self.__size__()
 
         if self.__changed or force:
 
             self.__changed = False
 
-            attr = color_pair(1) if self.__has_focus else color_pair(0)
+            attr = curses.color_pair(1) if self.__has_focus\
+                    else curses.color_pair(0)
 
             win.resize(*new_size)
             win.clear()
@@ -145,16 +138,16 @@ class ListBox():
             for line_no, row in enumerate(self.__rows__):
 
                 if self.__editable:
-                    attr = color_pair(1) if self.active == line_no\
-                        else color_pair(0)
+                    attr = curses.color_pair(1) if self.active == line_no\
+                        else curses.color_pair(0)
 
                     if line_no == self.selected:
-                        attr |= A_STANDOUT
+                        attr |= curses.A_STANDOUT
 
                     if line_no == self.active:
-                        attr |= A_UNDERLINE
+                        attr |= curses.A_UNDERLINE
                 else:
-                    attr = color_pair(0)
+                    attr = curses.color_pair(0)
 
                 # don't draw below the bottom
                 if(line_no >= offset  and
