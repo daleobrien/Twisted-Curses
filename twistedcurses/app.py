@@ -68,14 +68,14 @@ class App(CursesStdIO):
         curses.start_color()
 
         # normal colour
-        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         # focused colour
-        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLUE)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
         # lighter
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_GREEN)
-        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_RED)
+        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-        self.__stdscr.bkgd(' ', curses.color_pair(1))
+        #self.__stdscr.bkgd(' ', curses.color_pair(1))
 
         curses.noecho()
         curses.cbreak()

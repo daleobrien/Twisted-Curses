@@ -20,6 +20,7 @@ import curses
 
 from util import get_real_termial_size
 
+
 class Table():
 
     def __init__(self, position, size, callback, dim):
@@ -146,11 +147,10 @@ class Table():
             attr = curses.color_pair(2) if self.__has_focus else\
                 curses.color_pair(1)
 
-            if self.__changed:
-                win.resize(*new_size)
-                win.clear()
-                win.attrset(attr)
-                win.box()
+            win.resize(*new_size)
+            win.clear()
+            win.attrset(attr)
+            win.box()
 
             # draw the internal gird
             h, w = self.__size__()
