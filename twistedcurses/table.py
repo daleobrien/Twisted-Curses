@@ -15,23 +15,10 @@
 '''
 
 from twisted.python import log
-#from curses import (panel,
-                    #KEY_DOWN,
-                    #KEY_UP,
-                    ##KEY_END,
-                    #KEY_LEFT,
-                    #KEY_RIGHT,
-                    ##KEY_HOME,
-                    ##KEY_ENTER,
-                    #A_UNDERLINE,
-                    #A_STANDOUT,
-                    #tigetnum,
-                    #newwin,
-                    ##ascii,
-                    #color_pair)
 
 import curses
 
+from util import get_real_termial_size
 
 class Table():
 
@@ -50,10 +37,13 @@ class Table():
         self.__has_focus = False
         h, w = self.__size__()
 
-        self.__panel__ = curses.panel.new_panel(curses.newwin(h,
-                                                              w,
-                                                              self.y,
-                                                              self.x))
+        win = curses.newwin(h,
+                            w,
+                            self.y,
+                            self.x)
+
+        win.bkgd(' ', curses.color_pair(2))
+        self.__panel__ = curses.panel.new_panel(win)
 
         # 2D grid
 
@@ -65,15 +55,16 @@ class Table():
         self.active = [0, 0]
 
         self.callback = callback
-        self.draw()
+        #self.draw()
 
     def __size__(self):
         # look for springs (-1 means fix to screen dim)
 
         # use -1 , fill width,
         # -2, half of the width ??
-        w = curses.tigetnum('cols') - self.x if self.w < 0 else self.w
-        h = curses.tigetnum('lines') - self.y if self.h < 0 else self.h
+        y, x = get_real_termial_size()
+        w = x - self.x if self.w < 0 else self.w
+        h = y - self.y if self.h < 0 else self.h
 
         if (w, h) != self.__last_size:
             self.__changed = True
@@ -151,16 +142,15 @@ class Table():
 
         if self.__changed or force:
 
-            self.__changed = False
-
             # outline of table
-            attr = curses.color_pair(1) if self.__has_focus else\
-                curses.color_pair(0)
+            attr = curses.color_pair(2) if self.__has_focus else\
+                curses.color_pair(1)
 
-            win.resize(*new_size)
-            win.clear()
-            win.attrset(attr)
-            win.box()
+            if self.__changed:
+                win.resize(*new_size)
+                win.clear()
+                win.attrset(attr)
+                win.box()
 
             # draw the internal gird
             h, w = self.__size__()
@@ -214,14 +204,14 @@ class Table():
 
                         if self.__editable:
                             attr = curses.color_pair(1) if self.active == pos\
-                                else curses.color_pair(0)
+                                else curses.color_pair(1)
 
                             if self.selected == pos:
                                 attr |= curses.A_STANDOUT
                             if self.active == pos:
                                 attr |= curses.A_UNDERLINE
                         else:
-                            attr = curses.color_pair(0)
+                            attr = curses.color_pair(1)
 
                         win.addstr(h * row_no + 1 + row_offset,
                                    w * col_no + 1 + col_offset,
@@ -230,4 +220,4 @@ class Table():
 
             win.refresh()
 
-#
+            self.__changed = False

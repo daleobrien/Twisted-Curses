@@ -21,6 +21,8 @@ from signal import signal, SIGWINCH
 
 from twisted.python import log
 
+from util import get_real_termial_size
+
 
 class CursesStdIO:
     """fake fd to be registered as a reader with the twisted reactor.
@@ -55,20 +57,25 @@ class App(CursesStdIO):
         self.__stdscr.keypad(True)
         self.__stdscr.nodelay(True)
 
-        self._menu = curses.newwin(curses.tigetnum('lines'),
-                                   curses.tigetnum('cols'),
-                                   0,
-                                   0)
+        y, x = get_real_termial_size()
+        self._menu = curses.newwin(y, x, 0, 0)
 
-        self.__last_size = (curses.tigetnum('lines'),
-                            curses.tigetnum('cols'))
+        self.__last_size = (y, x)
 
         self.__focus__items = []
         self.__in_focus = 0
 
         curses.start_color()
+
+        # normal colour
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
         # focused colour
-        curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLUE)
+        # lighter
+        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_GREEN)
+        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_RED)
+
+        self.__stdscr.bkgd(' ', curses.color_pair(1))
 
         curses.noecho()
         curses.cbreak()
@@ -76,7 +83,7 @@ class App(CursesStdIO):
 
         self.title = title
         self.__menu__ = menu
-        self.__key_handler__ = {}
+        self.__key_handler__ = {'menu': {}}
 
         # list of widgets
         self._widgets = {}
@@ -150,7 +157,8 @@ class App(CursesStdIO):
             self.__key_handler__['menu'][ord(hot_key)] = callback
 
         # draw app title
-        middle = (curses.tigetnum('cols') - position) / 2
+        y, x = get_real_termial_size()
+        middle = (x - position) / 2
 
         self._menu.addstr(1, middle, '=== ' +\
             self.title + " ===", curses.A_NORMAL)
@@ -164,20 +172,24 @@ class App(CursesStdIO):
     def draw(self, force=False):
         '''draw everything, and all widgets'''
 
-        _size = (curses.tigetnum('lines'),
-                 curses.tigetnum('cols'))
+        (h, w) = get_real_termial_size()
 
-        if force or self.__last_size != _size:
+        if force or self.__last_size != (h, w):
 
-            log.msg("App Draw called, new_size", _size)
+            log.msg("App Draw called ", (h, w), self.__last_size)
 
-            self._menu.resize(*_size)
+            attr = curses.color_pair(1)
+
             self._menu.clear()
-            self._menu.hline(2,
-                             1,
-                             curses.ACS_HLINE,
-                             curses.tigetnum('cols') - 2)
+            self._menu.refresh()
+
+            self._menu = curses.newwin(h, w, 0, 0)
+            self._menu.attrset(attr)
             self._menu.box()
+
+            self._menu.hline(2, 1,
+                             curses.ACS_HLINE,
+                             w - 2)
             self.__draw_menu()
 
             self._menu.refresh()
@@ -185,7 +197,7 @@ class App(CursesStdIO):
         # draw children last
         self.__drawwidgets(force)
 
-        self.__last_size = _size
+        self.__last_size = (h, w)
 
     def logPrefix(self):
         pass
@@ -229,7 +241,9 @@ class App(CursesStdIO):
             self.draw(True)
 
         else:
-            focus = self.__focus__items[self.__in_focus]
+            focus = None
+            if len(self.__focus__items):
+                focus = self.__focus__items[self.__in_focus]
 
             # TODO there a whole lot more special key events, need to check
             # those too, e.g.  SUSPEND

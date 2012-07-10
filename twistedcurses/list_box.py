@@ -19,6 +19,7 @@ from twisted.python import log
 import curses
 from curses import panel
 
+from util import get_real_termial_size
 
 class ListBox():
 
@@ -30,14 +31,18 @@ class ListBox():
         self.x, self.y = position
         self.y += 2
 
-        self.__last_size = None
         self.__has_focus = False
+
+        self.__last_size = None
         h, w = self.__size__()
 
-        self.__panel__ = panel.new_panel(curses.newwin(h,
-                                                w,
-                                                self.y,
-                                                self.x))
+        win = curses.newwin(h,
+                            w,
+                            self.y,
+                            self.x)
+
+        win.bkgd(' ', curses.color_pair(4))
+        self.__panel__ = panel.new_panel(win)
 
         self.__rows__ = []
         self.__changed = True
@@ -47,15 +52,15 @@ class ListBox():
         self.active = 0
 
         self.callback = callback
-        self.draw()
 
     def __size__(self):
         # look for springs (-1 means fix to screen dim)
 
         # use -1 , fill width,
         # -2, half of the width ??
-        w = curses.tigetnum('cols') - self.x if self.w < 0 else self.w
-        h = curses.tigetnum('lines') - self.y if self.h < 0 else self.h
+        y, x = get_real_termial_size()
+        w = x - self.x if self.w < 0 else self.w
+        h = y - self.y if self.h < 0 else self.h
 
         if (w, h) != self.__last_size:
             self.__changed = True
@@ -118,11 +123,13 @@ class ListBox():
 
             self.__changed = False
 
-            attr = curses.color_pair(1) if self.__has_focus\
-                    else curses.color_pair(0)
+            attr = curses.color_pair(2) if self.__has_focus\
+                    else curses.color_pair(3)
 
-            win.resize(*new_size)
+            log.msg("old size", win.getmaxyx())
             win.clear()
+            win.resize(*new_size)
+            win.bkgd(' ', curses.color_pair(4))
             win.attrset(attr)
             win.box()
 
@@ -138,8 +145,8 @@ class ListBox():
             for line_no, row in enumerate(self.__rows__):
 
                 if self.__editable:
-                    attr = curses.color_pair(1) if self.active == line_no\
-                        else curses.color_pair(0)
+                    attr = curses.color_pair(2) if self.active == line_no\
+                        else curses.color_pair(1)
 
                     if line_no == self.selected:
                         attr |= curses.A_STANDOUT
@@ -147,7 +154,7 @@ class ListBox():
                     if line_no == self.active:
                         attr |= curses.A_UNDERLINE
                 else:
-                    attr = curses.color_pair(0)
+                    attr = curses.color_pair(1)
 
                 # don't draw below the bottom
                 if(line_no >= offset  and

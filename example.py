@@ -71,12 +71,10 @@ if __name__ == "__main__":
                      (0, 2, "0,2")))
 
     app.add_widget('table', table)
-
     app.set_editable('table', False)
 
     # twisted, ... Run Lola Run
     reactor.run()
-
 
 
 
