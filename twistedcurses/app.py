@@ -95,6 +95,8 @@ class App(CursesStdIO):
         self.__reactor.addReader(self)
 
     def onResize(self, sig, stack):
+        h, w = get_real_termial_size()
+        curses.resizeterm(h, w)
         self.process_character(curses.KEY_RESIZE)
 
     def add_widget(self, name, widget):
@@ -248,7 +250,6 @@ class App(CursesStdIO):
             # TODO there a whole lot more special key events, need to check
             # those too, e.g.  SUSPEND
             if c in (curses.KEY_RESIZE,):
-                log.msg("KEY_RESIZE")
                 self.draw(True)
 
             # menu handlers

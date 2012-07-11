@@ -52,11 +52,14 @@ if __name__ == "__main__":
     app = myApp(reactor)
 
     # create a listbox (it's all we have so far)
-    list_box = ListBox((0, 0), (20, -1), app.list_box_active_item_changed)
+    list_box = ListBox((0, 0),
+                       (20, -1),
+                       app.list_box_active_item_changed)
 
     list_box.add_rows(('item 1', 'item 2', 'item 3',
                        'item 4', 'item 5', 'item 6',
                        'item 7', 'item 8', 'item 9'))
+
     app.add_widget('side', list_box)
 
     # add another listbox

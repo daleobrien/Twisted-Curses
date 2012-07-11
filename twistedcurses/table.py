@@ -20,7 +20,6 @@ import curses
 
 from util import get_real_termial_size
 
-
 class Table():
 
     def __init__(self, position, size, callback, dim):
