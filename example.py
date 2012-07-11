@@ -20,6 +20,8 @@ from twistedcurses.list_box import ListBox
 from twistedcurses.table import Table
 from twisted.python import log
 
+from twisted.internet.task import LoopingCall
+
 
 class myApp(App):
     '''a simple app'''
@@ -31,10 +33,22 @@ class myApp(App):
 
         App.__init__(self, reactor, 'Simple App', self.menu)
 
+    def start_clock(self):
+        self.__i__ = 0
+        self.__lc = LoopingCall(self.clock)
+        self.__lc.start(1.0)
+
+    def clock(self):
+        log.msg("clock", self.__i__)
+        self.widget('table').set_cells([(0, 0, self.__i__)])
+        self.widget('table').draw()
+        self.__i__ += 1
+
     def start(self, key):
         log.msg("menu: start", key)
 
     def stop(self, key):
+        self.__lc.stop()
         log.msg("menu: stop", key)
 
     def list_box_active_item_changed(self, arg):
@@ -43,6 +57,7 @@ class myApp(App):
         '''
         self.widget('table').set_cells([(1, 2, arg['active'])])
         self.widget('table').draw()
+
 
 if __name__ == "__main__":
     '''   '''
@@ -75,6 +90,8 @@ if __name__ == "__main__":
 
     app.add_widget('table', table)
     app.set_editable('table', False)
+
+    app.start_clock()
 
     # twisted, ... Run Lola Run
     reactor.run()
